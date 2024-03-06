@@ -1,35 +1,29 @@
-import { FlatList, Image, Pressable, ScrollView, Text } from "react-native"
-import { styles } from "./style"
-import Ingredient from "../Ingredient"
-import { useState } from "react"
+import { ScrollView } from "react-native"
 
-export default function Ingredients() {
-  const [selected, setSelected] = useState<string[]>([])
+import { services } from "@/services"
 
-  function handleToggleSelected(value: string) {
-    if (selected.includes(value)) {
-      return setSelected((state) => state.filter((item) => item !== value))
-    }
+import { styles } from "./styles"
+import { Ingredient, IngredientsProps } from "@/components/Ingredient"
 
-    setSelected((state) => [...state, value])
-  }
+type Props = {
+  ingredients: IngredientsProps[]
+}
 
+export function Ingredients({ ingredients }: Props) {
   return (
     <ScrollView
-      contentContainerStyle={styles.container}
-      showsVerticalScrollIndicator={false}
+      horizontal
+      style={styles.container}
+      contentContainerStyle={styles.ingredientsContent}
+      showsHorizontalScrollIndicator={false}
     >
-      {Array.from({ length: 100 }).map((_, index) => {
-        return (
-          <Ingredient
-            key={index}
-            name="Tomate"
-            image=""
-            selected={selected.includes(String(index))}
-            onPress={() => handleToggleSelected(String(index))}
-          />
-        )
-      })}
+      {ingredients.map((ingredient) => (
+        <Ingredient
+          key={ingredient.name}
+          name={ingredient.name}
+          image={`${services.storage.imagePath}/${ingredient.image}`}
+        />
+      ))}
     </ScrollView>
   )
 }

@@ -1,12 +1,18 @@
-import { Alert, ScrollView, Text, View } from "react-native"
-import { styles } from "./style"
-import Ingredient from "@/components/Ingredient"
-import Ingredients from "@/components/Ingredients"
-import Selected from "@/components/Selected"
-import { useState } from "react"
+import { useEffect, useState } from "react"
+import { View, Text, ScrollView, Alert } from "react-native"
+import { router } from "expo-router"
 
-export default function Index() {
+import { services } from "@/services"
+
+import { styles } from "./style"
+import { Loading } from "@/components/Loading"
+import { Selected } from "@/components/Selected"
+import { Ingredient } from "@/components/Ingredient"
+
+export default function Home() {
+  const [isLoading, setIsLoading] = useState(true)
   const [selected, setSelected] = useState<string[]>([])
+  const [ingredients, setIngredients] = useState<IngredientResponse[]>([])
 
   function handleToggleSelected(value: string) {
     if (selected.includes(value)) {
@@ -16,15 +22,26 @@ export default function Index() {
     setSelected((state) => [...state, value])
   }
 
-  function handleOnClearSelected(): void {
-    Alert.alert("Limpar", "Deseja limpar tudo", [
-      { text: "Nao", style: "cancel" },
+  function handleClearSelected() {
+    Alert.alert("Limpar", "Deseja limpar tudo?", [
+      { text: "Não", style: "cancel" },
       { text: "Sim", onPress: () => setSelected([]) },
     ])
   }
 
-  function handleOnSearch(): void {
-    throw new Error("Function not implemented.")
+  function handleSearch() {
+    router.navigate("/recipes/" + selected)
+  }
+
+  useEffect(() => {
+    services.ingredientes
+      .findAll()
+      .then(setIngredients)
+      .finally(() => setIsLoading(false))
+  }, [])
+
+  if (isLoading) {
+    return <Loading />
   }
 
   return (
@@ -33,32 +50,31 @@ export default function Index() {
         Escolha {"\n"}
         <Text style={styles.subtitle}>os produtos</Text>
       </Text>
+
       <Text style={styles.message}>
-        Descubra receitas baseadas nos produtos que voce escolheu
+        Descubra receitas baseadas nos produtos que você escolheu.
       </Text>
 
       <ScrollView
         contentContainerStyle={styles.ingredients}
         showsVerticalScrollIndicator={false}
       >
-        {Array.from({ length: 100 }).map((_, index) => {
-          return (
-            <Ingredient
-              key={index}
-              name="Tomate"
-              image=""
-              selected={selected.includes(String(index))}
-              onPress={() => handleToggleSelected(String(index))}
-            />
-          )
-        })}
+        {ingredients.map((ingredient) => (
+          <Ingredient
+            key={ingredient.id}
+            name={ingredient.name}
+            image={`${services.storage.imagePath}/${ingredient.image}`}
+            selected={selected.includes(ingredient.id)}
+            onPress={() => handleToggleSelected(ingredient.id)}
+          />
+        ))}
       </ScrollView>
 
       {selected.length > 0 && (
         <Selected
           quantity={selected.length}
-          onClear={handleOnClearSelected}
-          onSearch={handleOnSearch}
+          onClear={handleClearSelected}
+          onSearch={handleSearch}
         />
       )}
     </View>
